@@ -5,7 +5,7 @@ library(TxDb.Mmusculus.UCSC.mm10.knownGene)
 library(org.Mm.eg.db)
 library(target)
 
-pharma <- read_rds('~/workingon/curatedAdipoArray/pharmacological_perturbation.rds')
+pharma <- read_rds('~/workingon/curatedAdipoArray/cleandata/pharmacological_perturbation.rds')
 ind <- pharma$series_id == 'GSE26207'
 
 eset <- pharma[, ind]
@@ -28,7 +28,7 @@ res <- list(Pparg = eset_g,
                    number = Inf,
                    adjust.method = 'fdr',
                    genelist = featureNames(x))
-    as.tibble(tt)
+    as_tibble(tt)
   }) %>%
   bind_rows(.id = 'target')
 

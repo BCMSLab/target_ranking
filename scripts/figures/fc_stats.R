@@ -2,7 +2,7 @@ library(tidyverse)
 library(limma)
 library(cowplot)
 
-pharma <- read_rds('~/workingon/curatedAdipoArray/pharmacological_perturbation.rds')
+pharma <- read_rds('~/workingon/curatedAdipoArray/cleandata/pharmacological_perturbation.rds')
 ind <- pharma$series_id == 'GSE26207'
 
 eset <- pharma[, ind]

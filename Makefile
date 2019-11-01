@@ -41,7 +41,8 @@ figures: dir_manuscript \
 	$(FIG_DIR)/sim_competitive.png \
 	$(FIG_DIR)/sim_cooperative.png \
 	$(FIG_DIR)/fc_stats.png \
-	$(FIG_DIR)/two_factor_ranking.png
+	$(FIG_DIR)/two_factor_ranking.png \
+	motifs
 
 # figures
 $(FIG_DIR)/sim_competitive.png: $(FIG_SRC)/sim_competitive.R
@@ -51,6 +52,8 @@ $(FIG_DIR)/sim_cooperative.png: $(FIG_SRC)/sim_cooperative.R
 $(FIG_DIR)/fc_stats.png: $(FIG_SRC)/fc_stats.R
 	$(RFIG)
 $(FIG_DIR)/two_factor_ranking.png: $(FIG_SRC)/two_factor_ranking.R
+	$(RFIG)
+motifs: $(FIG_SRC)/motifs.R
 	$(RFIG)
 	
 # Clean Up
