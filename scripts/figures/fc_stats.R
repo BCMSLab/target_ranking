@@ -1,68 +1,59 @@
 library(tidyverse)
-library(limma)
+library(reshape2)
+library(rtracklayer)
+library(GenomicRanges)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+library(org.Hs.eg.db)
 library(cowplot)
+library(ggupset)
+library(target)
 
-pharma <- read_rds('~/workingon/curatedAdipoArray/cleandata/pharmacological_perturbation.rds')
-ind <- pharma$series_id == 'GSE26207'
+# run analysis
+source('scripts/analysis.R')
 
-eset <- pharma[, ind]
-
-ind <- apply(exprs(eset), 1, function(x) sum(is.na(x)))
-
-eset_d <- eset[ind == 0, 1:12]
-eset_g <- eset[ind == 0, 13:24]
-
-
-res <- list(PPARG = eset_g,
-            PPARD = eset_d) %>%
-  map(function(x) {
-    x$treatment <- factor(x$treatment, levels = c('none', 'drug'))
-    mod <- model.matrix(~treatment, data = pData(x))
-    fit <- lmFit(x,
-                 design = mod)
-    fit <- eBayes(fit)
-    tt <- topTable(fit,
-                   number = Inf,
-                   adjust.method = 'fdr',
-                   genelist = featureNames(x))
-    as.tibble(tt)
-  }) %>%
-  bind_rows(.id = 'target')
-
-p1 <- res %>%
-  ggplot(aes(x = logFC, y = -log10(P.Value))) +
-  geom_point(alpha = .5, color = 'darkgray') +
-  geom_vline(xintercept = c(-1, 1), lty = 2, color = 'red') +
-  geom_hline(yintercept = -log10(.01), lty = 2, color = 'red') +
-  facet_wrap(~target) +
+# generate figure
+c1 <- diff_exp %>%
+  ggplot(aes(x = fc, y = -log10(pvalue))) +
+  geom_point(color = 'darkgray', alpha = .5) +
+  facet_wrap(~tf, scales = 'free_x') +
   theme_bw() +
-  theme(strip.background = element_blank(),
-        panel.grid = element_blank(),
+  theme(panel.grid = element_blank(),
+        strip.background = element_blank(),
         panel.spacing = unit(0,"null"),
         panel.border = element_rect(size = 1.5)) +
-  lims(x = c(-2, 2)) +
   labs(x = 'Fold-change (log_2)',
        y = 'P-value (-log_10)')
 
-p2 <- res %>%
-  gather(type, value, logFC, t) %>%
-  dplyr::select(target, ID, type, value) %>%
-  spread(target, value) %>%
-  ggplot(aes(x = PPARD, y = PPARG)) +
+c2 <- diff_exp2 %>%
+  ggplot(aes(x = YY1_fc, y = YY2_fc)) +
   geom_point(color = 'darkgray', alpha = .5) +
-  geom_vline(xintercept = 0, lty = 2, color = 'red') +
   geom_hline(yintercept = 0, lty = 2, color = 'red') +
-  facet_wrap(~type, scales = 'free') +
+  geom_vline(xintercept = 0, lty = 2, color = 'red') +
   theme_bw() +
-  theme(strip.background = element_blank(),
-        panel.grid = element_blank(),
-        panel.border = element_rect(size = 1.5))
+  lims(x = c(-3, 3), y = c(-3, 3)) +
+  theme(panel.grid = element_blank(),
+        panel.border = element_rect(size = 1.5)) +
+  labs(x = 'YY1 Fold-change (log_2)',
+       y = 'YY2 Fold-change (log_2)')
 
-plot_grid(p1, p2, 
+c3 <- regulated_groups %>%
+  filter(dir != 'None') %>%
+  unite(group, dir, tf) %>%
+  group_by(gene) %>%
+  summarise(groups = list(group)) %>%
+  ggplot(aes(x = groups)) +
+  geom_bar() +
+  scale_x_upset() +
+  theme(panel.grid = element_blank(),
+        panel.background = element_rect(fill = 'white'),
+        panel.border = element_rect(fill = NA, size = 1.5)) +
+  labs(x = 'Target Sets', y = "Count of Targets")
+
+plot_grid(c1, c2, c3,
           nrow = 1,
           scale = .9,
           labels = 'AUTO',
-          label_size = 10,
-          label_fontface = 'plain') %>%
-  ggsave(filename = 'manuscript/figures/fc_stats.png',
-         height = 7, width = 24, units = 'cm')
+          label_fontface = 'plain',
+          label_size = 10) %>%
+  ggsave(filename = 'manuscript/fc_stats.png',
+         width = 24, height = 8, units = 'cm')

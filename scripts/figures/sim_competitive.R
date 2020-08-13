@@ -128,5 +128,5 @@ plot_grid(p1, p2, p3, p4, p5, p6,
           labels = 'AUTO',
           label_size = 10,
           label_fontface = 'plain') %>%
-  ggsave(filename = 'manuscript/figures/sim_competitive.png',
+  ggsave(filename = 'manuscript/sim_competitive.png',
          height = 16, width = 24, units = 'cm')
